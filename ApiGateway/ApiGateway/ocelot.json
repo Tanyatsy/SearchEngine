@@ -1,0 +1,106 @@
+﻿{
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/Search?text={everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5000
+        },
+        {
+          "Host": "localhost",
+          "Port": 6001
+        }
+      ],
+      "UpstreamPathTemplate": "/api/searchWord/{everything}",
+      "UpstreamHttpMethod": [ "Get" ],
+      "LoadBalancerOptions": {
+        "Type": "RoundRobin"
+      },
+      "Key": "search-service"
+    },
+    {
+      "DownstreamPathTemplate": "/Autocomplete?text={everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5002
+        }
+      ],
+      "UpstreamPathTemplate": "/api/completeWord/{everything}",
+      "UpstreamHttpMethod": [ "Get" ],
+      "FileCacheOptions": {
+        "TtlSeconds": 60,
+        "Region": "somename"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/Cache/empty",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5023
+        }
+      ],
+      "UpstreamPathTemplate": "/api/cache",
+      "UpstreamHttpMethod": [ "Get" ],
+      "Key": "cacheEmpty-service"
+    },
+    {
+      "DownstreamPathTemplate": "/Cache?text={everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5023
+        }
+      ],
+      "UpstreamPathTemplate": "/api/cache/{everything}",
+      "UpstreamHttpMethod": [ "Get" ],
+      "Key": "cache-service",
+      "LoadBalancerOptions": {
+        "Type": "LeastConnection"
+      }
+    },
+    {
+      "DownstreamPathTemplate": "/Cache/complete?text={everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5023
+        }
+      ],
+      "UpstreamPathTemplate": "/api/cache/complete/{everything}",
+      "UpstreamHttpMethod": [ "Get" ],
+      "Key": "cache-complete-service",
+      "LoadBalancerOptions": {
+        "Type": "LeastConnection"
+      }
+    }
+  ],
+  "Aggregates": [
+    {
+      "RouteKeys": [
+        "cache-service",
+        "cacheEmpty-service"
+      ],
+      "UpstreamPathTemplate": "/api/search/{everything}",
+      "Aggregator": "CacheAggregator",
+    },
+    {
+      "RouteKeys": [
+        "cache-complete-service",
+        "cacheEmpty-service"
+      ],
+      "UpstreamPathTemplate": "/api/complete/{everything}",
+      "Aggregator": "CacheCompleteAggregator"
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "https://localhost:5021"
+  }
+}
