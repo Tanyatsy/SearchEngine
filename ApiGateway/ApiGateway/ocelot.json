@@ -5,13 +5,9 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 5000
+          "Host": "search",
+          "Port": 80
         },
-        {
-          "Host": "localhost",
-          "Port": 6001
-        }
       ],
       "UpstreamPathTemplate": "/api/searchWord/{everything}",
       "UpstreamHttpMethod": [ "Get" ],
@@ -25,8 +21,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 5002
+          "Host": "autocomplete",
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/api/completeWord/{everything}",
@@ -41,8 +37,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 5023
+          "Host": "cache",
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/api/cache",
@@ -54,8 +50,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 5023
+          "Host": "cache",
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/api/cache/{everything}",
@@ -70,8 +66,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "localhost",
-          "Port": 5023
+          "Host": "cache",
+          "Port": 80
         }
       ],
       "UpstreamPathTemplate": "/api/cache/complete/{everything}",

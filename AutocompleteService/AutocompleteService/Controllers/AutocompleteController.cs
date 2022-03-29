@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using Newtonsoft.Json;
 using AutocompleteService.Services;
+using System.Net;
+using System.Text;
+using ApiGateway.Elasticsearch;
 
 namespace AutocompleteService.Controllers
 {
@@ -17,47 +20,24 @@ namespace AutocompleteService.Controllers
     [Route("[controller]")]
     public class AutocompleteController : ControllerBase
     {
-        private static readonly string[] Summaries = new[]
-        {
-            "Coffee", "Coffee Shop", "Coffee Barista", "Coffee Expert", "Coffee Rating"
-        };
-
         private readonly IRankApiService _rankApiService;
         private readonly IIndexApiService _indexApiService;
         private readonly IMessageBusClient _messageBus;
-        private readonly ILogger<AutocompleteController> _logger;
 
         public AutocompleteController(
-            ILogger<AutocompleteController> logger,
             IMessageBusClient messageBus,
             IIndexApiService indexApiService,
             IRankApiService rankApiService)
         {
             _messageBus = messageBus;
-            _logger = logger;
             _indexApiService = indexApiService;
             _rankApiService = rankApiService;
         }
 
         [HttpGet]
+        [Produces("application/json")]
         public async Task<IEnumerable<Word>> GetAutocompleteResultAsync([FromQuery] string text) 
         {
-            var wordCommand = new WordCommand
-            {
-                Word = text
-            };
-
-            foreach (var @event in wordCommand.Events)
-            {
-                var routingKey = "index-word";
-
-                _messageBus.Publish(
-                    message: @event,
-                    routingKey: routingKey,
-                    exchange: "index-service"
-                );
-            }
-
             var result = await GetAutocompleteDataAsync(text);
 
             SendSearchData(result, text);
@@ -71,19 +51,34 @@ namespace AutocompleteService.Controllers
 
         private async Task<List<string>> GetAutocompleteDataAsync(string text)
         {
-            
-            HttpResponseMessage responseRank = await _rankApiService.GetRankSearchesAsync(text);
-            HttpResponseMessage responseIndex = await _indexApiService.GetIndexesAsync(text);
+            var transactionId = Guid.NewGuid();
+            var sample = new List<string>() { "Your search is incorrect or some exception was thrown. See in logs!" };
 
-            var indexes = JsonConvert
-                    .DeserializeObject<List<string>>(
-                        await responseIndex.Content.ReadAsStringAsync()
-                    );
+            var validatorStatusCode = await TryValidateWordAsync(new ValidatorKeys { Id = transactionId, Keyword = text });
 
-            var searches = JsonConvert
-                     .DeserializeObject<List<string>>(
-                         await responseRank.Content.ReadAsStringAsync()
-                     );
+            if (validatorStatusCode == HttpStatusCode.BadRequest)
+            {
+                ElkSearching.logger.Fatal("Your search is incorrect or some exception was thrown. See in logs!");
+                return sample;
+            }
+
+            var (searches, rankResponseCode) = await MakeRankRequest(text);
+
+            if (rankResponseCode == HttpStatusCode.BadRequest)
+            {
+                await TryAbortTransactionValidateWordAsync(transactionId);
+                ElkSearching.logger.Fatal("Your search is incorrect or some exception was thrown. See in logs!");
+                return sample;
+            }
+
+            var (indexes, indexResponseCode) = await MakeIndexRequest(text);
+
+            if (indexResponseCode == HttpStatusCode.BadRequest)
+            {
+                await TryAbortTransactionValidateWordAsync(transactionId);
+                ElkSearching.logger.Fatal("Your search is incorrect or some exception was thrown. See in logs!");
+                return sample;
+            }
 
 
             return indexes
@@ -109,6 +104,86 @@ namespace AutocompleteService.Controllers
                     routingKey: routingKey,
                     exchange: "cache-service"
                 );
+            }
+
+            ElkSearching.logger.Information($"Search text: {text} -> sent from autocomplete service to Cache service");
+        }
+
+        private async Task<HttpStatusCode> TryValidateWordAsync(ValidatorKeys data)
+        {
+            try
+            {
+                using var client = new HttpClient();
+                client.BaseAddress = new Uri("http://validator:80/");
+
+                var content = new StringContent(JsonConvert.SerializeObject(data).ToString(), Encoding.UTF8, "application/json");
+                Console.WriteLine(JsonConvert.SerializeObject(data).ToString());
+                HttpResponseMessage response = await client.PostAsync($"Validator/validate", content);
+
+                return response.StatusCode;
+            }
+            catch (Exception e)
+            {
+                ElkSearching.logger.Error(e, "Validator request failed!");
+                return HttpStatusCode.BadRequest;
+            }
+        }
+
+        private async Task<HttpStatusCode> TryAbortTransactionValidateWordAsync(Guid transactionId)
+        {
+            try
+            {
+                using var client = new HttpClient();
+                client.BaseAddress = new Uri("http://validator:80/");
+
+                HttpResponseMessage response = await client.DeleteAsync($"Validator/abort/{transactionId}");
+
+                return response.StatusCode;
+            }
+            catch (Exception e)
+            {
+                ElkSearching.logger.Error(e, "Validator abort transaction request failed!");
+                return HttpStatusCode.BadRequest;
+            }
+        }
+
+        private async Task<(List<string>, HttpStatusCode)> MakeRankRequest(string text)
+        {
+            try
+            {
+                HttpResponseMessage responseRank = await _rankApiService.GetRankSearchesAsync(text);
+
+                var searches = JsonConvert
+                         .DeserializeObject<List<string>>(
+                             await responseRank.Content.ReadAsStringAsync()
+                         );
+
+                return (searches, responseRank.StatusCode);
+            }
+            catch(Exception e)
+            {
+                ElkSearching.logger.Error(e, "Rank request failed!");
+                return (new List<string>(), HttpStatusCode.BadRequest);
+            }
+        }
+
+        private async Task<(List<string>, HttpStatusCode)> MakeIndexRequest(string text)
+        {
+            try
+            {
+                HttpResponseMessage responseIndex = await _indexApiService.GetIndexesAsync(text);
+
+                var indexes = JsonConvert
+                        .DeserializeObject<List<string>>(
+                            await responseIndex.Content.ReadAsStringAsync()
+                        );
+
+                return (indexes, responseIndex.StatusCode);
+            }
+            catch (Exception e)
+            {
+                ElkSearching.logger.Error(e, "Index request failed!");
+                return (new List<string>(), HttpStatusCode.BadRequest);
             }
         }
 

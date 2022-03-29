@@ -1,4 +1,5 @@
-﻿using IndexService.Context;
+﻿using IndexService.Elasticsearch;
+using IndexService.Context;
 using IndexService.MessageBus;
 using IndexService.Models;
 using IndexService.Repositories;
@@ -7,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.ActionConstraints;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -42,20 +44,21 @@ namespace IndexService.Controllers
             return _context.PageData;
         }
 
-        [PortActionConstraint(5001)]
         [HttpGet("pagedata/{word}")]
-        public async Task<IEnumerable<PageData>> GetPageDataByWordAsync([FromRoute] string word)
+        public IEnumerable<PageData> GetPageDataByWord([FromRoute] string word)
         {
-            await Task.Delay(2000);
-            return _context.PageData.Where(data => data.Text.ToLower().Contains(word.ToLower())).ToList();
+            var pageData = _context.PageData.Where(data => data.Text.ToLower().Contains(word.ToLower())).ToList();
+
+            ElkSearching.logger.Information("Page Data is received from database" + JsonConvert.SerializeObject(pageData));
+            return pageData;
         }
 
-        [PortActionConstraint(5011)]
-        [HttpGet("pagedata/{word}")]
-        public IEnumerable<PageData> GetPageDataByWordPriority([FromRoute] string word)
-        {
-            return _context.PageData.Where(data => data.Text.ToLower().Contains(word.ToLower())).ToList();
-        }
+        /* [PortActionConstraint(5011)]
+         [HttpGet("pagedata/{word}")]
+         public IEnumerable<PageData> GetPageDataByWordPriority([FromRoute] string word)
+         {
+             return _context.PageData.Where(data => data.Text.ToLower().Contains(word.ToLower())).ToList();
+         }*/
 
         [HttpGet("autocomplete/{word}")]
         public List<string> GetAutocompleteDataByWord([FromRoute] string word)

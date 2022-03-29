@@ -13,7 +13,7 @@ namespace RankService.MessageBus
         public RabbitMQClient()
         {
             var connectionFactory = new ConnectionFactory {
-                HostName = "localhost",
+                HostName = "rabbitmq",
                 UserName = "guest",
                 Password = "guest"
             };

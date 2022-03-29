@@ -27,7 +27,7 @@ namespace RankService.Consumers
         )
         {
             Console.WriteLine(
-                $"Message received with Text {message.Text}"
+                $"Rank service message received with Text {message.Text}"
             );
         }
 

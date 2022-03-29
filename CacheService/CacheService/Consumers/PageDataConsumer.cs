@@ -1,3 +1,4 @@
+using CacheService.Elasticsearch;
 using CacheService.Models;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,9 +25,7 @@ namespace CacheService.Consumers
 
         protected override void LogMessageReceived(SearchData data)
         {
-            Console.WriteLine(
-                $"Message UserCreated received with Id {data.SearchText}"
-            );
+           ElkSearching.logger.Information($"Cache received message with text: {data.SearchText}");
         }
 
         protected override async Task RecieveSearchData(SearchData data)

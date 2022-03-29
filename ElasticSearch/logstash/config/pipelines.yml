@@ -1,0 +1,2 @@
+- pipeline.id: gateway_pipeline
+  path.config: "./ElasticSearch/logstash/pipeline/logstash-search.conf"

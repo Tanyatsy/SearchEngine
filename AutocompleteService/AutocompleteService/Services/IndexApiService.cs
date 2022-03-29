@@ -14,7 +14,7 @@ namespace AutocompleteService.Services
 
         public async Task<HttpResponseMessage> GetIndexesAsync(string word)
         {
-            string APIURL = $"http://localhost:5001/Index/autocomplete/{word}";
+            string APIURL = $"http://index:80/Index/autocomplete/{word}";
             var response = await _httpClient.GetAsync(APIURL);
             return response;
         }

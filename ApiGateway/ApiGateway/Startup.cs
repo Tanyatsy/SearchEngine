@@ -38,13 +38,13 @@ namespace ApiGateway
 
             services.AddHttpClient("SearchService", client =>
             {
-                client.BaseAddress = new Uri("http://localhost:5000/");
+                client.BaseAddress = new Uri("http://search:80/");
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             }).AddPolicyHandler(basicCircuitBreakerPolicy);
 
             services.AddHttpClient("AutocompleteService", client =>
             {
-                client.BaseAddress = new Uri("http://localhost:5002/");
+                client.BaseAddress = new Uri("http://autocomplete:80/");
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             }).AddPolicyHandler(basicCircuitBreakerPolicy);
 

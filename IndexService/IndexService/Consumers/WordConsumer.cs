@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using IndexService.Elasticsearch;
 using IndexService.Models;
 
 namespace IndexService.Consumers
@@ -20,18 +21,13 @@ namespace IndexService.Consumers
             InitializeEventBus();
         }
 
-        protected override void LogMessageReceived(
-            Word message
-        )
+        protected override void LogMessageReceived(Word message)
         {
-            Console.WriteLine(
-                $"Message received with Text {message.Text}"
-            );
+            ElkSearching.logger.Information($"Index service received message with Text {message.Text}");
         }
 
         protected override async Task SendPageData(Word message)
         {
-          
         }
     }
 }

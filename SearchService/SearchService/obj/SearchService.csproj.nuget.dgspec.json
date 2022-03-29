@@ -44,6 +44,10 @@
               "target": "Package",
               "version": "[1.11.1, )"
             },
+            "NEST": {
+              "target": "Package",
+              "version": "[7.16.0, )"
+            },
             "Newtonsoft.Json": {
               "target": "Package",
               "version": "[13.0.1, )"
@@ -51,6 +55,14 @@
             "RabbitMQ.Client": {
               "target": "Package",
               "version": "[6.2.2, )"
+            },
+            "Serilog.Settings.AppSettings": {
+              "target": "Package",
+              "version": "[2.2.2, )"
+            },
+            "Serilog.Sinks.Elasticsearch": {
+              "target": "Package",
+              "version": "[8.4.1, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",

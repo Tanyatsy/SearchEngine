@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\ElasticSearch",
+    "\\SearchService",
+    "\\SearchService - Copy",
+    "\\SearchService - Copy\\SearchService",
+    "\\SearchService - Copy\\SearchService\\Consumers",
+    "\\SearchService - Copy\\SearchService\\Controllers",
+    "\\SearchService\\SearchService",
+    "\\SearchService\\SearchService\\Controllers",
+    "\\SearchService\\SearchService\\Elasticsearch"
+  ],
+  "SelectedNode": "\\SearchService\\SearchService\\Elasticsearch\\Searching.cs",
+  "PreviewInSolutionExplorer": false
+}

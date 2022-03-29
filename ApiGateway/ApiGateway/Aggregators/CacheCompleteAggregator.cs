@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using ApiGateway.Elasticsearch;
+using Microsoft.AspNetCore.Http;
 using Ocelot.Middleware;
 using Ocelot.Multiplexer;
 using System;
@@ -34,9 +35,9 @@ namespace ApiGateway.Aggregators
                     var httpClient = _httpClientFactory.CreateClient("AutocompleteService");
                     HttpResponseMessage response = await httpClient.GetAsync($"Autocomplete?text={word}");
 
-                    while (!response.IsSuccessStatusCode && count < 4)
+                    while (!response.IsSuccessStatusCode && count < 2)
                     {
-                        await Task.Delay(10000);
+                        await Task.Delay(5000);
                         count++;
                         response = await httpClient.GetAsync($"Autocomplete?text={word}");
                     }
@@ -51,6 +52,7 @@ namespace ApiGateway.Aggregators
             }
             catch (Exception e)
             {
+                ElkSearching.logger.Error(e.Message, "Error in Api Gateway requests");
                 return new DownstreamResponse(null, System.Net.HttpStatusCode.InternalServerError, header, null);
             }
         }

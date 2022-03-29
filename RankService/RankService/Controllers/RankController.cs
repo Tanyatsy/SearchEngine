@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using RankService.Context;
 using RankService.MessageBus;
 using RankService.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -46,7 +45,7 @@ namespace RankService.Controllers
         public List<string> GetAutocompleteDataByWord([FromRoute] string word)
         {
             return _context.SearchData
-                .Where(data => data.Text.Contains(word))
+                .Where(data => data.Text.StartsWith(word))
                 .Select(data => data.Text)
                 .ToList();
         }

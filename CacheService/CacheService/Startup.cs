@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using SearchService.MessageBus;
+using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,10 +41,13 @@ namespace CacheService
             services.AddScoped<IMessageBusClient, RabbitMQClient>();
 
             services.AddStackExchangeRedisCache(options =>
-            {
-                options.Configuration = Configuration.GetConnectionString("Redis");
-                options.InstanceName = "RedisDemo_";
-            });
+             {
+                 options.Configuration = Configuration.GetConnectionString("Redis");
+                 options.InstanceName = "RedisDemo_";
+             });
+
+            
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

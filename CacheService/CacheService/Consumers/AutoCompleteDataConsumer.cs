@@ -1,6 +1,8 @@
+using CacheService.Elasticsearch;
 using CacheService.Models;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
 
@@ -24,9 +26,7 @@ namespace CacheService.Consumers
 
         protected override void LogMessageReceived(AutoCompleteData searches)
         {
-            Console.WriteLine(
-                $"Message Cache service received"
-            );
+            ElkSearching.logger.Information($"Message Cache service received: {JsonConvert.SerializeObject(searches)}");
         }
 
         protected override async Task RecieveSearchData(AutoCompleteData searches)

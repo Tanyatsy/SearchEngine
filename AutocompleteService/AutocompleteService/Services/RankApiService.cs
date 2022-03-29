@@ -14,7 +14,7 @@ namespace AutocompleteService.Services
 
         public async Task<HttpResponseMessage> GetRankSearchesAsync(string word)
         {
-            string APIURL = $"http://localhost:5003/Rank/autocomplete/{word}";
+            string APIURL = $"http://rank:80/Rank/autocomplete/{word}";
             var response = await _httpClient.GetAsync(APIURL);
             return response;
         }

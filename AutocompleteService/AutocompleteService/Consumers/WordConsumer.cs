@@ -1,3 +1,4 @@
+using ApiGateway.Elasticsearch;
 using AutocompleteService.Models;
 using System;
 using System.Threading.Tasks;
@@ -20,20 +21,14 @@ namespace AutocompleteService.Consumers
             InitializeEventBus();
         }
 
-        protected override void LogMessageReceived(
-            Word message
-        )
+        protected override void LogMessageReceived(Word message)
         {
-            Console.WriteLine(
-                $"Message UserCreated received with Id {message.Text}"
-            );
+            ElkSearching.logger.Information($"Autocomplete service received message with text: {message.Text}");
         }
 
         protected override async Task SendEmail(Word message)
         {
             await Task.Delay(5000);
-
-            Console.WriteLine("E-mail enviado para avisar sobre criação!");
         }
     }
 }

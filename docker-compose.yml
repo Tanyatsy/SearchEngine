@@ -1,0 +1,210 @@
+networks:
+  mylocal:
+    driver: bridge
+
+services:
+
+  api:
+    build:
+      context: ./ApiGateway/ApiGateway/
+      dockerfile: Dockerfile
+    container_name: api
+    networks:
+      - mylocal
+    ports:
+      - "5021:80"
+  autocomplete:
+    build:
+      context: ./AutocompleteService/AutocompleteService/
+      dockerfile: Dockerfile
+    container_name: autocomplete
+    networks:
+      - mylocal
+    ports:
+      - "5002:80"
+    restart: always
+  cache:
+    build:
+      context: ./CacheService/CacheService/
+      dockerfile: Dockerfile
+    container_name: cache
+    networks:
+      - mylocal
+    ports:
+      - "5023:80"
+    restart: always
+  rank:
+    build:
+      context: ./RankService/RankService/
+      dockerfile: Dockerfile
+    container_name: rank
+    restart: always
+    depends_on:
+      - rabbitmq
+    networks:
+      - mylocal
+    ports:
+      - "5003:80"
+  index:
+    container_name: "index"
+    restart: always
+    depends_on:
+      - rabbitmq
+    build:
+      context: ./IndexService/IndexService
+      dockerfile: Dockerfile
+    networks:
+      - mylocal
+    ports:
+      - "5001:80"
+  validator:
+    container_name: "validator"
+    restart: always
+    depends_on:
+      - rabbitmq
+    build:
+      context: ./ValidatorService/ValidatorService
+      dockerfile: Dockerfile
+    networks:
+      - mylocal
+    ports:
+      - "5004:80"
+  mongo:
+    container_name: mongo
+    image: mongo:4.4
+    volumes:
+      - ~/mongors/data1:/data/db
+      - ./rs-init.sh:/scripts/rs-init.sh
+    networks:
+      - mylocal
+    ports:
+      - "27017:27017"
+    links:
+      - mongo2
+      - mongo3
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+  mongo2:
+    container_name: mongo2
+    image: mongo:4.4
+    volumes:
+      - ~/mongors/data2:/data/db
+    networks:
+      - mylocal
+    ports:
+      - "27022:27017"
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+  mongo3:
+    container_name: mongo3
+    image: mongo:4.4
+    volumes:
+      - ~/mongors/data3:/data/db
+    networks:
+      - mylocal
+    ports:
+      - "27023:27017"
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+
+  rabbitmq:
+    container_name: "rabbitmq"
+    image: rabbitmq:3.9-management
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - mylocal
+
+  redis:
+    container_name: "redis"
+    image: "redis:alpine"
+    ports:
+     - "5022:6379"
+    networks:
+      - mylocal
+
+  postgres:
+     container_name: "postgres"
+     image: postgres:14.0
+     restart: always
+     environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=1111
+        - POSTGRES_DB=postgres
+     ports:
+        - '5432:5432'
+     networks:
+      - mylocal
+
+  search:
+    container_name: "search"
+    restart: always
+    depends_on:
+      - rabbitmq
+    build:
+      context: ./SearchService/SearchService
+      dockerfile: Dockerfile
+    networks:
+      - mylocal
+    ports:
+      - "5000:80"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.16.0
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    restart: unless-stopped
+    environment:
+        - discovery.type=single-node
+        - node.name=elasticsearch
+        - cluster.name=es-docker-cluster
+        - bootstrap.memory_lock=true
+        - xpack.security.enabled=false
+        - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+        memlock:
+          soft: -1
+          hard: -1
+        nofile:
+          soft: 65536
+          hard: 65536
+    volumes:
+        - ./ElasticSearch/elasticsearch/data:/usr/share/elasticsearch/data:rw
+    networks:
+        - mylocal
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.16.0
+    restart: unless-stopped
+    volumes:
+        - type: bind
+          source: ./ElasticSearch/logstash/config/logstash.yml
+          target: /ElasticSearch/logstash/config/logstash.yml
+          read_only: true
+        - type: bind
+          source: ./ElasticSearch/logstash/config/pipelines.yml
+          target: /ElasticSearch/logstash/config/pipelines.yml
+          read_only: true
+        - type: bind
+          source: ./ElasticSearch/logstash/pipeline
+          target: /ElasticSearch/logstash/pipeline
+          read_only: true
+    ports:
+        - "9600:9600"
+        - "5044:5044"
+    depends_on:
+      - elasticsearch
+    networks:
+        - mylocal
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.16.0
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+        - mylocal

@@ -56,6 +56,10 @@
               "target": "Package",
               "version": "[6.2.2, )"
             },
+            "Serilog.Sinks.Elasticsearch": {
+              "target": "Package",
+              "version": "[8.4.1, )"
+            },
             "StackExchange.Redis": {
               "target": "Package",
               "version": "[2.2.50, )"

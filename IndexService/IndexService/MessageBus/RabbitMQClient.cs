@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using IndexService.Elasticsearch;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using RabbitMQ.Client;
@@ -13,7 +14,7 @@ namespace IndexService.MessageBus
         public RabbitMQClient()
         {
             var connectionFactory = new ConnectionFactory {
-                HostName = "localhost",
+                HostName = "rabbitmq",
                 UserName = "guest",
                 Password = "guest"
             };
@@ -46,6 +47,7 @@ namespace IndexService.MessageBus
             );
 
             Console.WriteLine($"{exchange}->{routingKey}");
+            ElkSearching.logger.Information($"{exchange} -> {routingKey}");
 
             channel.BasicPublish(
                 exchange: exchange,
